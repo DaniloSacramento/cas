@@ -27,6 +27,9 @@ class HistoricoPage extends StatefulWidget {
 class _HistoricoPageState extends State<HistoricoPage> {
   late DateTime currentDate;
   late DateTime date30DaysBefore;
+  DateTime? selectedStartDate;
+DateTime? selectedEndDate;
+bool isDateRangeSelected = false;
   bool isFirstTimeOpened = true;
   List<PromotorEscalaPonto>? pontos;
   bool isDateInFuture(DateTime date) {
@@ -36,9 +39,10 @@ class _HistoricoPageState extends State<HistoricoPage> {
   final _formKey = GlobalKey<FormState>();
   UserPromote? user;
   Future<void> _handleRefresh() async {
-  await _getUser(); // Atualiza os dados do usuário
-  setState(() {}); // Atualiza o estado para refletir as mudanças
+  await _getUser(); 
+  setState(() {}); 
 }
+DateTime initialStartDate = DateTime.now().subtract(Duration(days: 30));
 final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
   TextEditingController lojaController = TextEditingController();
   TextEditingController dtInicialController = TextEditingController();
@@ -68,49 +72,52 @@ final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey = GlobalKey<RefreshI
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback(
-      (timeStamp) {
-        currentDate = DateTime.now();
-        date30DaysBefore = currentDate.subtract(Duration(days: 30));
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      currentDate = DateTime.now();
+      date30DaysBefore = currentDate.subtract(Duration(days: 30));
 
-        _getUser();
-        dtFinalController.text =
-            DateFormat('dd/MM/yyyy').format(DateTime.now());
-        DateTime dataInicial = DateTime.now().subtract(Duration(days: 30));
-        dtInicialController.text = DateFormat('dd/MM/yyyy').format(dataInicial);
-      },
-    );
+      _getUser();
+      dtFinalController.text = DateFormat('dd/MM/yyyy').format(DateTime.now());
+      DateTime dataInicial = DateTime.now().subtract(Duration(days: 30));
+      dtInicialController.text = DateFormat('dd/MM/yyyy').format(dataInicial);
+
+      if (isDateRangeSelected) {
+        currentDate = selectedEndDate!;
+        date30DaysBefore = selectedStartDate!;
+      }
+    });
   }
 
   
-Future<void> _showDateRangePicker(BuildContext context) async {
-  DateTime currentDateMinus90Days = DateTime.now().subtract(Duration(days: 90));
+ Future<void> _showDateRangePicker(BuildContext context) async {
+    DateTime currentDateMinus30Days = DateTime.now().subtract(Duration(days: 30));
+    DateTime currentDateMinus90Days = DateTime.now().subtract(Duration(days: 90));
 
-  final selectedDateRange = await showDateRangePicker(
-    context: context,
-    firstDate: currentDateMinus90Days,
-    lastDate: DateTime.now(),
-    initialDateRange: DateTimeRange(
-      start: currentDateMinus90Days,
-      end: DateTime.now(),
-    ),
-  );
+    final selectedDateRange = await showDateRangePicker(
+      context: context,
+      firstDate: currentDateMinus90Days,
+      lastDate: DateTime.now(),
+      initialDateRange: isDateRangeSelected
+          ? DateTimeRange(start: selectedStartDate!, end: selectedEndDate!)
+          : DateTimeRange(
+              start: currentDateMinus30Days,
+              end: DateTime.now(),
+            ),
+    );
 
-  if (selectedDateRange != null) {
-    setState(() {
-     isFirstTimeOpened = false;
-    currentDate = selectedDateRange.end;
-    date30DaysBefore = selectedDateRange.start;
-
-    dtInicialController.text = DateFormat('dd/MM/yyyy').format(date30DaysBefore);
-    dtFinalController.text = DateFormat('dd/MM/yyyy').format(currentDate); 
-    });
-    
-  } 
-  setState(() {
-  });
-
-}
+    if (selectedDateRange != null) {
+      setState(() {
+        isFirstTimeOpened = false;
+        isDateRangeSelected = true;
+        selectedStartDate = selectedDateRange.start;
+        selectedEndDate = selectedDateRange.end;
+        currentDate = selectedEndDate!;
+        date30DaysBefore = selectedStartDate!;
+        dtInicialController.text = DateFormat('dd/MM/yyyy').format(date30DaysBefore);
+        dtFinalController.text = DateFormat('dd/MM/yyyy').format(currentDate);
+      });
+    }
+  }
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -234,183 +241,195 @@ Future<void> _showDateRangePicker(BuildContext context) async {
                           showDialog(
                             context: context,
                             builder: (BuildContext context) {
-                              return AlertDialog(
-                                iconPadding: EdgeInsets.zero,
-                                icon: Row(
-                                  children: [
-                                    IconButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      icon: const Icon(
-                                        Icons.close,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                scrollable: true,
-                                content: Padding(
-                                  padding: const EdgeInsets.all(0),
-                                  child: Form(
-                                    key: _formKey,
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(0),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Filtro de historico',
-                                            style: GoogleFonts.dosis(
-                                              textStyle: TextStyle(
-                                                  color: darkBlueColor,
-                                                  fontSize: 20,
-                                                  fontWeight: FontWeight.bold),
-                                            ),
+                              return StatefulBuilder(
+                                builder: (context, setState) {
+                                  return AlertDialog(
+                                    iconPadding: EdgeInsets.zero,
+                                    icon: Row(
+                                      children: [
+                                        IconButton(
+                                          onPressed: () => Navigator.pop(context),
+                                          icon: const Icon(
+                                            Icons.close,
                                           ),
-                                          Container(
-                                            height: 55,
-                                            child: Padding(
-                                              padding: const EdgeInsets.fromLTRB(
-                                                  0, 5, 0, 0),
-                                              child: TextFormField(
-                                                controller: lojaController,
-                                                decoration: InputDecoration(
-                                                  border: OutlineInputBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                      12.0,
-                                                    ),
-                                                    borderSide: BorderSide.none,
-                                                  ),
-                                                  hintText: 'Loja',
-                                                  hintStyle: GoogleFonts.dosis(),
-                                                  filled: true,
-                                                  fillColor: Colors.grey[300],
+                                        ),
+                                      ],
+                                    ),
+                                    scrollable: true,
+                                    content: Padding(
+                                      padding: const EdgeInsets.all(0),
+                                      child: Form(
+                                        key: _formKey,
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(0),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Filtro de historico',
+                                                style: GoogleFonts.dosis(
+                                                  textStyle: TextStyle(
+                                                      color: darkBlueColor,
+                                                      fontSize: 20,
+                                                      fontWeight: FontWeight.bold),
                                                 ),
                                               ),
-                                            ),
-                                          ),
-                                          Row(
-                                            children: [
-                                              Expanded(
-                                                child: ElevatedButton(
-                                                  style: ElevatedButton.styleFrom(
-                                                      backgroundColor:
-                                                          Colors.grey[300]),
-                                                  onPressed: () {
-                                                      _showDateRangePicker(
-                                                          context);
-                            },
-                                                  child: Text(
-                                                    '${DateFormat('dd/MM/yyyy').format(date30DaysBefore)}',
-                                                    style: GoogleFonts.dosis(
-                                                      textStyle: const TextStyle(
-                                                        color: Colors.black,
-                                                        fontSize: 16,
+                                              Container(
+                                                height: 55,
+                                                child: Padding(
+                                                  padding: const EdgeInsets.fromLTRB(
+                                                      0, 5, 0, 0),
+                                                  child: TextFormField(
+                                                    controller: lojaController,
+                                                    decoration: InputDecoration(
+                                                      border: OutlineInputBorder(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                          12.0,
+                                                        ),
+                                                        borderSide: BorderSide.none,
+                                                      ),
+                                                      hintText: 'Loja',
+                                                      hintStyle: GoogleFonts.dosis(),
+                                                      filled: true,
+                                                      fillColor: Colors.grey[300],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: ElevatedButton(
+                                                      style: ElevatedButton.styleFrom(
+                                                          backgroundColor:
+                                                              Colors.grey[300]),
+                                                      onPressed: () {
+                                                          _showDateRangePicker(
+                                                              context).then((value) {
+                                                                setState(() {
+                                                                  
+                                                                });
+                                                              }); 
+                                                              },
+                                                      child: Text(
+                                                        '${DateFormat('dd/MM/yyyy').format(date30DaysBefore)}',
+                                                        style: GoogleFonts.dosis(
+                                                          textStyle: const TextStyle(
+                                                            color: Colors.black,
+                                                            fontSize: 16,
+                                                          ),
+                                                        ),
                                                       ),
                                                     ),
                                                   ),
-                                                ),
-                                              ),
-                                              SizedBox(
-                                                width: 5,
-                                              ),
-                                              Expanded(
-                                                child: ElevatedButton(
-                                                  style: ElevatedButton.styleFrom(
-                                                      backgroundColor:
-                                                          Colors.grey[300]),
-                                                  onPressed: () {
-                                                      _showDateRangePicker(
-                                                          context); 
-                                                          },
-                                                  child: Text(
-                                                      '${DateFormat('dd/MM/yyyy').format(currentDate)}',
-                                                      style: GoogleFonts.dosis(
-                                                          textStyle:
-                                                              const TextStyle(
-                                                        color: Colors.black,
-                                                        fontSize: 16,
-                                                      ))),
+                                                  SizedBox(
+                                                    width: 5,
+                                                  ),
+                                                  Expanded(
+                                                    child: ElevatedButton(
+                                                      style: ElevatedButton.styleFrom(
+                                                          backgroundColor:
+                                                              Colors.grey[300]),
+                                                      onPressed: () {
+                                                          _showDateRangePicker(
+                                                              context).then((value) {
+                                                                setState(() {
+                                                                  
+                                                                });
+                                                              }); 
+                                                              },
+                                                      child: Text(
+                                                          '${DateFormat('dd/MM/yyyy').format(currentDate)}',
+                                                          style: GoogleFonts.dosis(
+                                                              textStyle:
+                                                                  const TextStyle(
+                                                            color: Colors.black,
+                                                            fontSize: 16,
+                                                          ))),
+                                                    
+                                                    ),
+                                                  ),
                                                 
-                                                ),
+                                                ],
+                                                
                                               ),
-                                            
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.spaceEvenly,
+                                                children: [
+                                                  ElevatedButton(
+                                                    style: ElevatedButton.styleFrom(
+                                                        backgroundColor:
+                                                            Colors.white),
+                                                    onPressed: () {
+                                                      lojaController.clear();
+                                                      dtInicialController.clear();
+                                                      dtFinalController.clear();
+                                                    },
+                                                    child: Text(
+                                                      'Limpar',
+                                                      style: GoogleFonts.dosis(
+                                                        textStyle: const TextStyle(
+                                                          fontSize: 17,
+                                                          fontWeight: FontWeight.bold,
+                                                          color: Colors.black,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  ElevatedButton(
+                                                    style: ElevatedButton.styleFrom(
+                                                        backgroundColor:
+                                                            Colors.yellow[600]),
+                                                    onPressed: () async {
+                                                      //   _checkInternetConnection();
+                                                      if (_formKey.currentState!
+                                                          .validate()) {
+                                                        DateTime dtInicial = DateFormat(
+                                                                'dd/MM/yyyy')
+                                                            .parse(dtInicialController
+                                                                .text); //DateTime.tryParse(dtInicialController.text) ?? DateTime.now();
+                                                        DateTime dtFinal =
+                                                            DateFormat('dd/MM/yyyy')
+                                                                .parse(
+                                                                    dtFinalController
+                                                                        .text);
+                                                        pontos = await pontoPromotor(
+                                                          email: user!.email,
+                                                          data1Filter:
+                                                              DateFormat('yyyy-MM-dd')
+                                                                  .format(dtInicial),
+                                                          data2Filter:
+                                                              DateFormat('yyyy-MM-dd')
+                                                                  .format(dtFinal),
+                                                          faltasFilter: "false",
+                                                        );
+                                                        setState(() {});
+                                                        Navigator.of(context).pop();
+                                                      }
+                                                    },
+                                                    child: Text(
+                                                      'Filtrar',
+                                                      style: GoogleFonts.dosis(
+                                                        textStyle: const TextStyle(
+                                                          fontSize: 17,
+                                                          fontWeight: FontWeight.bold,
+                                                          color: Colors.black,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              )
                                             ],
-                                            
                                           ),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceEvenly,
-                                            children: [
-                                              ElevatedButton(
-                                                style: ElevatedButton.styleFrom(
-                                                    backgroundColor:
-                                                        Colors.white),
-                                                onPressed: () {
-                                                  lojaController.clear();
-                                                  dtInicialController.clear();
-                                                  dtFinalController.clear();
-                                                },
-                                                child: Text(
-                                                  'Limpar',
-                                                  style: GoogleFonts.dosis(
-                                                    textStyle: const TextStyle(
-                                                      fontSize: 17,
-                                                      fontWeight: FontWeight.bold,
-                                                      color: Colors.black,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                              ElevatedButton(
-                                                style: ElevatedButton.styleFrom(
-                                                    backgroundColor:
-                                                        Colors.yellow[600]),
-                                                onPressed: () async {
-                                                  //   _checkInternetConnection();
-                                                  if (_formKey.currentState!
-                                                      .validate()) {
-                                                    DateTime dtInicial = DateFormat(
-                                                            'dd/MM/yyyy')
-                                                        .parse(dtInicialController
-                                                            .text); //DateTime.tryParse(dtInicialController.text) ?? DateTime.now();
-                                                    DateTime dtFinal =
-                                                        DateFormat('dd/MM/yyyy')
-                                                            .parse(
-                                                                dtFinalController
-                                                                    .text);
-                                                    pontos = await pontoPromotor(
-                                                      email: user!.email,
-                                                      data1Filter:
-                                                          DateFormat('yyyy-MM-dd')
-                                                              .format(dtInicial),
-                                                      data2Filter:
-                                                          DateFormat('yyyy-MM-dd')
-                                                              .format(dtFinal),
-                                                      faltasFilter: "false",
-                                                    );
-                                                    setState(() {});
-                                                    Navigator.of(context).pop();
-                                                  }
-                                                },
-                                                child: Text(
-                                                  'Filtrar',
-                                                  style: GoogleFonts.dosis(
-                                                    textStyle: const TextStyle(
-                                                      fontSize: 17,
-                                                      fontWeight: FontWeight.bold,
-                                                      color: Colors.black,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          )
-                                        ],
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ),
+                                  );
+                                }
                               );
                             },
                           );
@@ -669,7 +688,7 @@ Future<void> _showDateRangePicker(BuildContext context) async {
                                               )
                                       ],
                                     ),
-                                    const Divider(
+                                   const Divider(
                                       color: Colors.black,
                                     ),
                                     Row(
@@ -689,10 +708,8 @@ Future<void> _showDateRangePicker(BuildContext context) async {
                                           ),
                                       ],
                                     ),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
+                                  Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,children: [
+                                    Row(children: [
                                         isChekin
                                             ? const Icon(
                                                 Icons.login,
@@ -711,9 +728,14 @@ Future<void> _showDateRangePicker(BuildContext context) async {
                                                         fontSize: 18)),
                                               )
                                             : Container(),
+                                      
+                                    ],), 
+                                    Row(
+                                            mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
                                         Padding(
                                           padding:
-                                              const EdgeInsets.only(left: 213.0),
+                                              const EdgeInsets.only(left: 0.0),
                                           child: isChekin
                                               ? const Icon(
                                                   Icons.logout,
@@ -736,8 +758,8 @@ Future<void> _showDateRangePicker(BuildContext context) async {
                                                         fontSize: 18)),
                                               )
                                             : Container(),
-                                      ],
-                                    ),
+                                    ],), 
+                                  ],)
                                   ],
                                 ),
                               ),

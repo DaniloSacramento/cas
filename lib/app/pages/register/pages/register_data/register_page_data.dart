@@ -9,6 +9,7 @@ import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+import 'package:validadores/Validador.dart';
 
 class RegisterData extends StatefulWidget {
   final Map<String, dynamic> qrCodeConsulta;
@@ -75,7 +76,7 @@ String? validateBirthDate(String? value) {
 }
 
   var maskformaterCpf = MaskTextInputFormatter(
-    mask: '###.###.###.##',
+    mask: '###.###.###-##',
     type: MaskAutoCompletionType.lazy,
   );
   final TextEditingController nameInputController = TextEditingController();
@@ -84,34 +85,7 @@ String? validateBirthDate(String? value) {
   final TextEditingController telefoneInputController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
-  bool isCPFValid(String cpf) {
-    if (cpf == null || cpf.isEmpty) {
-      return false;
-    }
-    cpf = cpf.replaceAll(RegExp(r'[^0-9]'), '');
 
-    if (cpf.length != 11) {
-      return false;
-    }
-    if (cpf.runes.toSet().length == 1) {
-      return false;
-    }
-    int soma = 0;
-    for (int i = 0; i < 9; i++) {
-      soma += int.parse(cpf[i]) * (10 - i);
-    }
-    int primeiroDigito = (soma * 10) % 11;
-
-    if (primeiroDigito != int.parse(cpf[9])) {
-      return false;
-    }
-    soma = 0;
-    for (int i = 0; i < 10; i++) {
-      soma += int.parse(cpf[i]) * (11 - i);
-    }
-    int segundoDigito = (soma * 10) % 11;
-    return segundoDigito == int.parse(cpf[10]);
-  }
   @override
   Widget build(BuildContext context) {
     final double buttonWidth = MediaQuery.of(context).size.width * 0.95;
@@ -213,14 +187,13 @@ String? validateBirthDate(String? value) {
                               keyboardType: TextInputType.number,
                               cursorColor: Colors.black,
                               validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Digite um CPF válido';
-                                }
-                                if (!isCPFValid(value)) {
-                                  return 'CPF inválido';
-                                }
-                                return null;
-                              },
+                      return Validador()
+                          .add(Validar.CPF, msg: 'CPF Inválido')
+                          .add(Validar.OBRIGATORIO, msg: 'Campo obrigatório')
+                          .minLength(11)
+                          .maxLength(11)
+                          .valido(value, clearNoNumber: true);
+                    },
                               decoration: InputDecoration(
                                 hintText: "000.000.000-00",
                                 filled: true,

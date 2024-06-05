@@ -29,5 +29,6 @@ class StatusDataSorce {
     } else {
       throw Exception('Falha ao enviar a solicitação POST');
     }
+    return null;
   }
 }

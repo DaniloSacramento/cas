@@ -214,9 +214,7 @@ class _LoginPageState extends State<LoginPage> {
                             if (value == null || value.isEmpty) {
                               return 'Por favor, insira uma senha.';
                             }
-                            if (!validarSenha(value)) {
-                              return 'A senha não atende aos critérios de validação.';
-                            }
+                           
                             return null;
                           },
                         ),

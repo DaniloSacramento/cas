@@ -11,7 +11,7 @@ FutureOr<void> main() async {
   final bool hasUser = await verificarUser();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   await initializeDateFormatting();
-  
+    
   runApp(
     App(
       hasUser: hasUser,

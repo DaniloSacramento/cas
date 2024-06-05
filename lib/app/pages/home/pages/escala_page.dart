@@ -344,7 +344,7 @@ final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey = GlobalKey<RefreshI
                       onPressed: () {
                         _getUser();
                       },
-                      child: Icon(Icons.refresh),
+                      child: Icon(Icons.refresh, color: Colors.black,),
                     ),
                   )
                 ],

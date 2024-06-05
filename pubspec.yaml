@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+9
+version: 1.0.0+12
 
 environment:
   sdk: '>=3.0.6 <4.0.0'
@@ -86,22 +86,23 @@ flavorizr:
         name: "Acesso Novo"
 
       android:
-        applicationId: "br.com.app_trivia_acesso.acessonovo"
+        applicationId: "com.trivia.controledeacesso.trivia"
         icon: "assets/ic_launcher.png"
       ios:
-        bundleId: "br.com.app_trivia_acesso.acessonovo"
+        bundleId: "com.trivia.controledeacesso.trivia"
       macos:
-        bundleId: "br.com.app_trivia_acesso.acessonovo"        
+        bundleId: "com.trivia.controledeacesso.trivia"        
     trivia:
       app:
         name: "Trivia Acesso"
       android:
-        applicationId: "br.com.apptrivia"
+        applicationId: "com.trivia.controledeacesso.trivia"
         icon: "assets/ic_launcher.png"
       ios:
-        bundleId: "br.com.apptrivia"
+        bundleId: "com.trivia.controledeacesso.trivia"
+        icon: "assets/icone_app.png"
       macos:
-        bundleId: "br.com.apptrivia"   
+        bundleId: "com.trivia.controledeacesso.trivia"   
 
   
     
